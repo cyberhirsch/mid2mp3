@@ -3,178 +3,434 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal MIDI Studio (Robust)</title>
+    <title>WebDAW Studio</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background: #2c3e50; 
-            color: white; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .container { 
-            background: #34495e; 
-            padding: 2rem; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3); 
-            width: 500px; 
-            max-width: 100%;
-        }
-        h1 { margin-top: 0; text-align: center; color: #ecf0f1; margin-bottom: 0.5rem; }
-        .subtitle { text-align: center; color: #bdc3c7; font-size: 0.9rem; margin-bottom: 1.5rem; font-style: italic;}
-        
-        .control-group { 
-            background: #2c3e50; 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin-bottom: 1rem; 
-            border: 1px solid #3e5871;
-        }
-        .control-group h3 { 
-            margin: 0 0 10px 0; 
-            font-size: 0.8rem; 
-            text-transform: uppercase; 
-            color: #bdc3c7; 
-            letter-spacing: 1px; 
+        :root {
+            --bg-dark: #121212;
+            --panel-bg: #1e1e1e;
+            --header-bg: #252526;
+            --border-color: #333;
+            --accent: #007fd4;
+            --text-main: #d4d4d4;
+            --text-muted: #858585;
+            --danger: #d94444;
+            --success: #3c9d62;
+            --track-bg: #2d2d30;
         }
 
-        /* File Input Row */
-        .file-row { display: flex; gap: 10px; align-items: center; }
-        input[type="file"] { flex: 1; padding: 0.5rem; background: #ecf0f1; color: #333; border-radius: 4px; border: none; }
-        
-        /* Small Action Button */
-        .action-btn { 
-            padding: 0 15px; height: 36px; background: #3498db; color: white; border: none; border-radius: 4px; 
-            font-weight: bold; cursor: pointer; font-size: 0.9rem;
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
-        .action-btn:hover { background: #2980b9; }
 
-        #track-list {
-            max-height: 200px;
-            overflow-y: auto;
-            padding-right: 5px;
-            margin-bottom: 10px;
-        }
-        #track-list::-webkit-scrollbar { width: 6px; }
-        #track-list::-webkit-scrollbar-thumb { background: #7f8c8d; border-radius: 3px; }
-
-        .track-row {
+        /* --- TOP TRANSPORT BAR --- */
+        .transport-bar {
+            height: 60px;
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            background: #3e5871;
-            margin-bottom: 6px;
-            padding: 8px;
+            padding: 0 20px;
+            gap: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 20;
+        }
+
+        .brand { font-weight: bold; font-size: 1.1rem; color: #fff; margin-right: 20px; letter-spacing: 1px;}
+        
+        .transport-controls {
+            display: flex;
+            gap: 10px;
+            background: #111;
+            padding: 5px;
+            border-radius: 6px;
+            border: 1px solid #444;
+        }
+
+        .btn-transport {
+            background: #333;
+            border: none;
+            color: #ccc;
+            width: 40px;
+            height: 35px;
             border-radius: 4px;
-            font-size: 0.85rem;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
-        .track-info { flex: 1; padding-right: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .track-select { width: 140px; padding: 4px; border: none; border-radius: 3px; font-size: 0.8rem; }
         
-        label { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; }
-        input[type="range"] { width: 100%; cursor: pointer; margin-bottom: 10px; }
-        .val-display { font-weight: bold; color: #3498db; }
+        .btn-transport:hover:not(:disabled) { background: #444; color: white; }
+        .btn-transport.play.active { background: var(--success); color: white; }
+        .btn-transport.stop:hover { background: var(--danger); }
         
-        .btn-row { display: flex; gap: 10px; margin-top: 15px; }
+        .lcd-display {
+            background: #000;
+            color: var(--accent);
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 35px;
+            min-width: 80px;
+        }
+        .lcd-label { font-size: 0.6rem; color: #555; text-transform: uppercase; }
+        .lcd-val { font-size: 1.1rem; font-weight: bold; }
 
-        .big-btn { 
-            color: white; border: none; padding: 12px; border-radius: 6px; 
-            cursor: pointer; font-weight: bold; font-size: 1rem; flex: 1;
-            transition: opacity 0.2s;
+        .btn-export {
+            margin-left: auto;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            height: 40px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        
-        #playBtn { background: #e67e22; }
-        #playBtn:hover { background: #d35400; }
-        
-        #convertBtn { background: #27ae60; }
-        #convertBtn:hover { background: #2ecc71; }
-        
-        button:disabled { background: #7f8c8d !important; cursor: not-allowed; opacity: 0.7; }
+        .btn-export:hover { background: #006bb3; }
+        .btn-export:disabled { background: #444; cursor: not-allowed; color: #777; }
 
-        #status { 
-            margin-top: 1rem; text-align: center; color: #ecf0f1; min-height: 1.2em; font-size: 0.9rem;
-            white-space: pre-wrap; word-break: break-word;
+        /* --- MAIN WORKSPACE --- */
+        .workspace {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
         }
-        .error-text { color: #e74c3c; font-weight: bold; }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 250px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            z-index: 15;
+        }
+
+        .panel-box {
+            background: #252526;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
         
-        .download-link { 
-            display: block; text-align: center; background: #e67e22; color: white; text-decoration: none; 
-            padding: 12px; border-radius: 6px; margin-top: 15px; font-weight: bold; 
+        .panel-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+            font-weight: bold;
         }
+
+        .btn-file {
+            border: 1px dashed #666;
+            color: #ccc;
+            background: transparent;
+            padding: 20px;
+            width: 100%;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            box-sizing: border-box;
+            font-size: 0.9rem;
+        }
+        .btn-file:hover { border-color: var(--accent); color: var(--accent); }
+        input[type="file"] { display: none; }
+
+        .control-row { margin-bottom: 15px; }
+        .control-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #aaa; }
+        
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
+            background: var(--accent); cursor: pointer; margin-top: -5px; 
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; background: #444; border-radius: 2px;
+        }
+
+        /* --- TRACK AREA --- */
+        .track-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #181818;
+            overflow: hidden;
+            position: relative; /* Anchor for timeline */
+        }
+
+        .track-header-row {
+            height: 30px;
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            z-index: 5;
+        }
+
+        .track-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background: #121212;
+            position: relative;
+        }
+        .track-list-container::-webkit-scrollbar { width: 8px; }
+        .track-list-container::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+
+        /* Single Track Row */
+        .daw-track {
+            display: flex;
+            height: 80px; 
+            background: var(--track-bg);
+            margin-bottom: 4px;
+            border-radius: 4px;
+            border-left: 4px solid var(--accent);
+            overflow: hidden;
+        }
+
+        .track-controls {
+            width: 280px;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 1px solid #111;
+            background: #252526;
+            gap: 6px;
+            z-index: 2;
+        }
+
+        .track-name { font-weight: bold; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .track-params {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mute-btn {
+            background: #333; color: #888; border: 1px solid #444;
+            width: 24px; height: 24px; font-size: 0.7rem; cursor: pointer; border-radius: 3px;
+        }
+        .mute-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+        .track-select {
+            background: #111; color: #ddd; border: 1px solid #444;
+            border-radius: 3px; font-size: 0.75rem; height: 24px; flex: 1;
+        }
+
+        .vol-slider-container { flex: 1; display: flex; align-items: center; gap: 5px; }
+        .vol-slider { width: 60px; }
+
+        /* --- VISUALIZATION --- */
+        .track-timeline {
+            flex: 1;
+            position: relative;
+            background-color: #1e1e1e;
+            overflow: hidden;
+            background-image: linear-gradient(#2a2a2a 1px, transparent 1px);
+            background-size: 100% 25%;
+        }
+
+        .note-rect {
+            position: absolute;
+            background: var(--accent);
+            opacity: 0.8;
+            height: 6px;
+            border-radius: 2px;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .drum-track .note-rect { background: #e67e22; }
+        .drum-track { border-left-color: #e67e22; }
+
+        /* --- PLAYHEAD CURSOR --- */
+        /* This sits on top of the track list container */
+        .timeline-overlay {
+            position: absolute;
+            top: 30px; /* Below header */
+            bottom: 0;
+            left: 280px; /* Offset by Control Width + Padding logic */
+            /* Actually, track-list-container adds 10px padding. 
+               Track controls are 280px + padding + border. 
+               Let's align it dynamically via CSS calc or layout */
+            right: 0;
+            pointer-events: none;
+            z-index: 10;
+            overflow: hidden; 
+        }
+
+        /* We need the playhead to be positioned RELATIVE to the timeline area inside the rows.
+           Since all rows align perfectly, we can create one global playhead.
+           Note: Track controls (280) + padding(12*2) + border(1) ~ 305px roughly. 
+           However, let's just make the overlay start after the sidebar.
+        */
+        
+        /* Adjusting layout for playhead alignment */
+        .daw-track { position: relative; } /* Ensure z-index works */
+        
+        /* The cursor line itself */
+        #playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #fff;
+            box-shadow: 0 0 5px rgba(255,255,255, 0.7);
+            left: 0%;
+            display: none; /* Hidden by default */
+        }
+        
+        /* Overlays */
+        #status-overlay {
+            position: fixed; bottom: 20px; right: 20px; background: #333; padding: 10px 20px;
+            border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-size: 0.85rem;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; border-left: 4px solid var(--accent);
+            z-index: 100;
+        }
+        #status-overlay.show { opacity: 1; }
+
+        .download-modal {
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center;
+        }
+        .download-box {
+            background: var(--panel-bg); padding: 30px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);
+        }
+        .btn-download {
+            background: var(--success); color: white; border:none; padding: 10px 20px; 
+            border-radius: 4px; text-decoration: none; font-weight: bold; display: inline-block; margin-top:15px;
+        }
+        .close-modal { margin-top: 10px; background: transparent; border: none; color: #777; cursor: pointer; text-decoration: underline;}
+
     </style>
     
-    <!-- Scripts -->
     <script src="https://unpkg.com/tone@13.8.25/build/Tone.js"></script>
     <script src="https://unpkg.com/@tonejs/midi"></script>
     <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 </head>
 <body>
 
-<div class="container">
-    <h1>Universal MIDI Studio</h1>
-    <div class="subtitle">Preview & Render</div>
+<header class="transport-bar">
+    <div class="brand">WebDAW</div>
+    
+    <div class="transport-controls">
+        <button id="stopBtn" class="btn-transport stop" disabled>■</button>
+        <button id="playBtn" class="btn-transport play" disabled>▶</button>
+    </div>
 
-    <div class="control-group">
-        <h3>1. File</h3>
-        <div class="file-row">
+    <div class="lcd-display">
+        <div class="lcd-label">TEMPO</div>
+        <div class="lcd-val"><span id="bpmDisplay">120</span> <small>BPM</small></div>
+    </div>
+
+    <button id="exportBtn" class="btn-export" disabled>
+        <span>●</span> Render MP3
+    </button>
+</header>
+
+<div class="workspace">
+    <div class="sidebar">
+        <div class="panel-box">
+            <div class="panel-title">Project File</div>
+            <button class="btn-file" id="fileBtn">Click to Load MIDI</button>
             <input type="file" id="midiInput" accept=".mid,.midi">
-            <button id="loadBtn" class="action-btn">Load</button>
+            <div id="fileName" style="margin-top:10px; font-size:0.8rem; color:#888; text-align:center; word-break: break-all;">No file loaded</div>
+        </div>
+
+        <div class="panel-box">
+            <div class="panel-title">Master Channel</div>
+            <div class="control-row">
+                <div class="control-label"><span>BPM</span></div>
+                <input type="range" id="bpmInput" min="40" max="240" step="1" value="120">
+            </div>
+            <div class="control-row">
+                <div class="control-label"><span>Pitch Shift</span> <span id="pitchVal" class="val-display">0</span></div>
+                <input type="range" id="pitchInput" min="-12" max="12" step="1" value="0">
+            </div>
+            <div class="control-row">
+                <div class="control-label"><span>Reverb</span> <span id="reverbVal" class="val-display">10%</span></div>
+                <input type="range" id="reverbInput" min="0" max="0.8" step="0.05" value="0.1">
+            </div>
         </div>
     </div>
 
-    <div class="control-group" id="tracks-group" style="display:none;">
-        <h3>2. Instruments</h3>
-        <div id="track-list"></div>
+    <div class="track-area">
+        <div class="track-header-row">
+            <div style="width: 280px;">TRACK CONTROLS</div>
+            <div style="flex:1; padding-left: 10px;">TIMELINE</div>
+        </div>
+        
+        <div class="track-list-container" id="trackList">
+            <div style="padding: 20px; text-align: center; color: #444; margin-top: 50px; font-style: italic;">
+                Load a MIDI file to generate track view.
+            </div>
+        </div>
+
+        <!-- PLAYHEAD OVERLAY -->
+        <!-- Left position accounts for sidebar width + track control width + padding roughly -->
+        <!-- In CSS, daw-track has controls (280) + border(1). -->
+        <!-- But the Timeline div inside daw-track is where notes are. -->
+        <!-- We will align this overlay to match the 'track-timeline' area using calc -->
+        <div class="timeline-overlay" style="left: calc(280px + 20px);"> <!-- 280 controls + padding -->
+            <div id="playhead"></div>
+        </div>
     </div>
+</div>
 
-    <div class="control-group">
-        <h3>3. Settings</h3>
-        <label>Target Tempo (BPM) <span id="bpmVal" class="val-display">120</span></label>
-        <input type="range" id="bpmInput" min="40" max="240" step="1" value="120">
+<div id="status-overlay">Loading...</div>
 
-        <label>Pitch Shift <span id="pitchVal" class="val-display">0</span></label>
-        <input type="range" id="pitchInput" min="-12" max="12" step="1" value="0">
-
-        <label>Reverb <span id="reverbVal" class="val-display">10%</span></label>
-        <input type="range" id="reverbInput" min="0" max="0.8" step="0.05" value="0.1">
+<div class="download-modal" id="dlModal">
+    <div class="download-box">
+        <h2 style="margin-top:0">Export Complete</h2>
+        <p>Your MP3 is ready.</p>
+        <div id="dlLinkContainer"></div>
+        <button class="close-modal" onclick="document.getElementById('dlModal').style.display='none'">Close</button>
     </div>
-
-    <div class="btn-row">
-        <button id="playBtn" class="big-btn" disabled>▶ Play Preview</button>
-        <button id="convertBtn" class="big-btn" disabled>★ Render MP3</button>
-    </div>
-    
-    <div id="status">Waiting for file...</div>
-    <div id="download-area"></div>
 </div>
 
 <script>
-    // -- Global Error Handler (In case Scripts fail to load) --
-    window.onerror = function(msg, url, line) {
-        document.getElementById('status').innerHTML = `<span class="error-text">System Error: ${msg}<br>Check internet connection for Tone.js</span>`;
-        return false;
-    };
-
-    // -- Elements --
+    // -- UI Elements --
     const midiInput = document.getElementById('midiInput');
-    const loadBtn = document.getElementById('loadBtn');
+    const fileBtn = document.getElementById('fileBtn');
     const playBtn = document.getElementById('playBtn');
-    const convertBtn = document.getElementById('convertBtn');
-    const statusDiv = document.getElementById('status');
-    const downloadArea = document.getElementById('download-area');
-    const trackListDiv = document.getElementById('track-list');
-    const tracksGroup = document.getElementById('tracks-group');
+    const stopBtn = document.getElementById('stopBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const trackListDiv = document.getElementById('trackList');
+    const statusDiv = document.getElementById('status-overlay');
+    const playhead = document.getElementById('playhead');
     
-    // Controls
+    // Params
     const bpmInput = document.getElementById('bpmInput');
+    const bpmDisplay = document.getElementById('bpmDisplay');
     const pitchInput = document.getElementById('pitchInput');
-    const reverbInput = document.getElementById('reverbInput');
-    const bpmVal = document.getElementById('bpmVal');
     const pitchVal = document.getElementById('pitchVal');
+    const reverbInput = document.getElementById('reverbInput');
     const reverbVal = document.getElementById('reverbVal');
 
     // -- State --
@@ -182,66 +438,54 @@
     let originalBpm = 120;
     let isPlaying = false;
     let activeSynths = [];
+    let animationFrameId;
 
     const INSTRUMENTS = [
-        { val: 'triangle', label: 'Triangle (Soft)' },
-        { val: 'square', label: 'Square (Retro)' },
-        { val: 'sawtooth', label: 'Sawtooth (Sharp)' },
-        { val: 'sine', label: 'Sine (Smooth)' },
-        { val: 'membrane', label: 'Membrane (Drums)' }
+        { val: 'triangle', label: 'Triangle' },
+        { val: 'square', label: 'Square' },
+        { val: 'sawtooth', label: 'Sawtooth' },
+        { val: 'sine', label: 'Sine' },
+        { val: 'membrane', label: 'Drums (Membrane)' }
     ];
 
-    // -- UI Updates --
+    function showStatus(msg) {
+        statusDiv.textContent = msg;
+        statusDiv.classList.add('show');
+        if(msg === 'Stopped.' || msg.includes('Loaded')) {
+            setTimeout(() => statusDiv.classList.remove('show'), 2000);
+        }
+    }
+
+    // -- UI Listeners --
+    fileBtn.addEventListener('click', () => midiInput.click());
+    
     pitchInput.oninput = (e) => pitchVal.innerText = (e.target.value > 0 ? '+' : '') + e.target.value;
     reverbInput.oninput = (e) => reverbVal.innerText = Math.round(e.target.value * 100) + '%';
-    bpmInput.oninput = (e) => bpmVal.innerText = e.target.value;
+    bpmInput.oninput = (e) => bpmDisplay.innerText = e.target.value;
 
-    // -- LOAD LOGIC --
-    function processFile(file) {
+    // -- 1. Load Logic --
+    midiInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
         if (!file) return;
         
-        // Stop playback if running
         if (isPlaying) stopPlayback();
-
-        statusDiv.textContent = "Parsing MIDI...";
-        statusDiv.className = "";
+        showStatus("Parsing MIDI...");
         
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                // Ensure Tone/Midi loaded
-                if (typeof Midi === 'undefined') throw new Error("Midi parser library not loaded.");
-                
                 midiData = new Midi(e.target.result);
-                setupMidiUI(file.name);
+                setupProject(file.name);
             } catch (err) {
-                statusDiv.innerHTML = `<span class="error-text">Error: ${err.message}</span>`;
-                console.error(err);
+                showStatus("Error: " + err.message);
             }
         };
         reader.readAsArrayBuffer(file);
-    }
-
-    // 1. Listen for file select
-    midiInput.addEventListener('change', (e) => processFile(e.target.files[0]));
-    
-    // 2. Listen for manual load button (fixes "stuck" inputs)
-    loadBtn.addEventListener('click', () => {
-        if(midiInput.files.length > 0) {
-            processFile(midiInput.files[0]);
-        } else {
-            midiInput.click(); // Open dialog if empty
-        }
     });
 
-    // 3. Auto-check on page load (fixes browser auto-fill)
-    window.addEventListener('load', () => {
-        if(midiInput.files.length > 0) {
-            processFile(midiInput.files[0]);
-        }
-    });
-
-    function setupMidiUI(filename) {
+    function setupProject(filename) {
+        document.getElementById('fileName').textContent = filename;
+        
         if (midiData.header.tempos.length > 0) {
             originalBpm = Math.round(midiData.header.tempos[0].bpm);
         } else {
@@ -249,48 +493,84 @@
         }
 
         bpmInput.value = originalBpm;
-        bpmVal.innerText = originalBpm;
+        bpmDisplay.innerText = originalBpm;
         
+        renderTracksUI();
+
+        playBtn.disabled = false;
+        stopBtn.disabled = false;
+        exportBtn.disabled = false;
+        showStatus("Project Loaded.");
+    }
+
+    function renderTracksUI() {
         trackListDiv.innerHTML = '';
-        tracksGroup.style.display = 'block';
+        const totalDuration = midiData.duration; 
 
         midiData.tracks.forEach((track, index) => {
             if (track.notes.length === 0) return;
 
-            const row = document.createElement('div');
-            row.className = 'track-row';
-
             let defaultInst = 'triangle';
-            if (track.instrument.percussion || track.channel === 9) { 
-                defaultInst = 'membrane'; 
+            let isDrum = false;
+
+            if (track.instrument.percussion || track.channel === 9) {
+                defaultInst = 'membrane';
+                isDrum = true;
             } else if (track.instrument.family === 'bass') {
                 defaultInst = 'sawtooth';
             } else if (track.instrument.family === 'piano') {
                 defaultInst = 'square';
             }
 
+            let notesHtml = '';
+            const minPitch = 24; 
+            const maxPitch = 100;
+            const pitchRange = maxPitch - minPitch;
+
+            track.notes.forEach(note => {
+                const left = (note.time / totalDuration) * 100;
+                const width = (note.duration / totalDuration) * 100;
+                let pitchPercent = ((note.midi - minPitch) / pitchRange) * 100;
+                if (pitchPercent < 0) pitchPercent = 0;
+                if (pitchPercent > 95) pitchPercent = 95;
+                if (isDrum) pitchPercent = 50 + ((note.midi % 12) * 2);
+
+                notesHtml += `<div class="note-rect" style="left:${left}%; width:${Math.max(width, 0.2)}%; bottom:${pitchPercent}%;"></div>`;
+            });
+
             let optionsHtml = INSTRUMENTS.map(inst => 
                 `<option value="${inst.val}" ${inst.val === defaultInst ? 'selected' : ''}>${inst.label}</option>`
             ).join('');
 
-            row.innerHTML = `
-                <div class="track-info">
-                    <strong>${index + 1}.</strong> ${track.name || track.instrument.name || 'Track ' + (index+1)}
-                </div>
-                <select class="track-select" id="inst-select-${index}">
-                    ${optionsHtml}
-                </select>
-            `;
-            trackListDiv.appendChild(row);
-        });
+            const trackClass = isDrum ? 'daw-track drum-track' : 'daw-track';
 
-        playBtn.disabled = false;
-        convertBtn.disabled = false;
-        statusDiv.textContent = `Loaded: ${filename}`;
-        downloadArea.innerHTML = '';
+            const div = document.createElement('div');
+            div.className = trackClass;
+            div.innerHTML = `
+                <div class="track-controls">
+                    <div class="track-name">${index + 1}. ${track.name || track.instrument.name || 'Track ' + (index+1)}</div>
+                    <div class="track-params">
+                        <button class="mute-btn" id="mute-${index}" onclick="toggleMute(this)">M</button>
+                        <select class="track-select" id="inst-${index}">${optionsHtml}</select>
+                        <div class="vol-slider-container">
+                            <span style="font-size:0.6rem; color:#666">VOL</span>
+                            <input type="range" class="vol-slider" id="vol-${index}" min="-60" max="0" value="-5" step="1">
+                        </div>
+                    </div>
+                </div>
+                <div class="track-timeline">
+                    ${notesHtml}
+                </div>
+            `;
+            trackListDiv.appendChild(div);
+        });
     }
 
-    // -- SCHEDULING LOGIC (Shared) --
+    window.toggleMute = function(btn) {
+        btn.classList.toggle('active');
+    };
+
+    // -- 2. Scheduling Engine --
     function scheduleTracks(transport, destination) {
         const targetBpm = parseInt(bpmInput.value);
         const safeOriginalBpm = originalBpm > 0 ? originalBpm : 120;
@@ -299,31 +579,30 @@
         const pitchShift = parseInt(pitchInput.value);
         const reverbAmt = parseFloat(reverbInput.value);
 
-        // Tone v13 Reverb
-        const reverb = new Tone.Freeverb({
-            roomSize: reverbAmt,
-            dampening: 3000
-        }).connect(destination);
-
+        const reverb = new Tone.Freeverb({ roomSize: reverbAmt, dampening: 3000 }).connect(destination);
         const synthsCreated = [];
 
         midiData.tracks.forEach((track, index) => {
             if (track.notes.length === 0) return;
 
-            const selectEl = document.getElementById(`inst-select-${index}`);
-            if (!selectEl) return;
-            const instType = selectEl.value;
+            const instEl = document.getElementById(`inst-${index}`);
+            const volEl = document.getElementById(`vol-${index}`);
+            const muteEl = document.getElementById(`mute-${index}`);
+            if(!instEl || muteEl.classList.contains('active')) return;
+
+            const instType = instEl.value;
+            const volDb = parseInt(volEl.value);
 
             let synth;
             if (instType === 'membrane') {
                 synth = new Tone.PolySynth(4, Tone.MembraneSynth);
-                synth.set({ volume: -5, octaves: 2, pitchDecay: 0.05 });
+                synth.set({ volume: volDb, octaves: 2, pitchDecay: 0.05 });
             } else {
                 synth = new Tone.PolySynth(6, Tone.Synth);
                 synth.set({
                     oscillator: { type: instType },
                     envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 },
-                    volume: -8
+                    volume: volDb
                 });
             }
 
@@ -333,7 +612,6 @@
             track.notes.forEach(note => {
                 let startTime = note.time / speedRatio;
                 let duration = note.duration / speedRatio;
-                
                 if (duration <= 0) duration = 0.1;
                 if (startTime < 0) startTime = 0;
 
@@ -353,65 +631,90 @@
         return synthsCreated;
     }
 
-    // -- PLAY PREVIEW --
+    // -- 3. Transport & Animation Logic --
     playBtn.addEventListener('click', async () => {
-        if (isPlaying) {
-            stopPlayback();
-            return;
-        }
+        if (isPlaying) { stopPlayback(); return; }
+        if (Tone.context.state !== 'running') await Tone.context.resume();
 
-        // Initialize Audio Context (Required for browsers)
-        if (Tone.context.state !== 'running') {
-            await Tone.context.resume();
-        }
-
-        statusDiv.textContent = "Playing...";
-        playBtn.textContent = "■ Stop";
-        playBtn.style.background = "#c0392b";
+        showStatus("Playing...");
+        playBtn.classList.add('active');
         
         activeSynths = scheduleTracks(Tone.Transport, Tone.Master);
         Tone.Transport.start();
         isPlaying = true;
+        
+        // Start Playhead
+        playhead.style.display = 'block';
+        animatePlayhead();
     });
+
+    stopBtn.addEventListener('click', stopPlayback);
 
     function stopPlayback() {
         Tone.Transport.stop();
-        Tone.Transport.cancel();
+        Tone.Transport.cancel(); // Clear events
         activeSynths.forEach(s => s.dispose());
         activeSynths = [];
         isPlaying = false;
-        playBtn.textContent = "▶ Play Preview";
-        playBtn.style.background = "#e67e22";
-        statusDiv.textContent = "Stopped.";
+        playBtn.classList.remove('active');
+        showStatus("Stopped.");
+        
+        // Stop Playhead
+        cancelAnimationFrame(animationFrameId);
+        playhead.style.left = '0%';
+        playhead.style.display = 'none';
     }
 
-    // -- RENDER MP3 --
-    convertBtn.addEventListener('click', () => {
+    function animatePlayhead() {
+        if(!isPlaying) return;
+
+        // Calculate current progress
+        const targetBpm = parseInt(bpmInput.value);
+        const safeOriginalBpm = originalBpm > 0 ? originalBpm : 120;
+        const speedRatio = targetBpm / safeOriginalBpm;
+        
+        // The total scheduled duration in seconds (after speed adjustment)
+        const totalDuration = midiData.duration / speedRatio;
+        
+        // Current Time in seconds
+        const currentTime = Tone.Transport.seconds;
+        
+        const progressPercent = (currentTime / totalDuration) * 100;
+        
+        if(progressPercent <= 100) {
+            playhead.style.left = progressPercent + '%';
+            animationFrameId = requestAnimationFrame(animatePlayhead);
+        } else {
+            // Auto stop when done
+            stopPlayback();
+        }
+    }
+
+    // -- 4. Export Logic --
+    exportBtn.addEventListener('click', () => {
         if (!midiData) return;
         if (isPlaying) stopPlayback();
         
-        convertBtn.disabled = true;
+        exportBtn.disabled = true;
         playBtn.disabled = true;
-        downloadArea.innerHTML = '';
-
+        
         const targetBpm = parseInt(bpmInput.value);
         const safeOriginalBpm = originalBpm > 0 ? originalBpm : 120;
         const speedRatio = targetBpm / safeOriginalBpm;
         const adjustedDuration = (midiData.duration / speedRatio) + 1.0; 
 
-        statusDiv.textContent = "Synthesizing... (Please wait)";
+        showStatus("Rendering Audio... (Please Wait)");
 
-        // Tone.js v13 Offline Rendering
         Tone.Offline(function(Transport) {
             scheduleTracks(Transport, Tone.Master);
             Transport.start();
         }, adjustedDuration).then(function(buffer) {
-            statusDiv.textContent = "Encoding MP3...";
+            showStatus("Encoding MP3...");
             setTimeout(() => encodeMp3(buffer), 50);
         }).catch(function(err){
             console.error(err);
-            statusDiv.innerHTML = `<span class="error-text">Render Error: ${err}</span>`;
-            convertBtn.disabled = false;
+            showStatus("Render Error");
+            exportBtn.disabled = false;
             playBtn.disabled = false;
         });
     });
@@ -436,25 +739,28 @@
                 const mp3buf = mp3encoder.encodeBuffer(l, r);
                 if (mp3buf.length > 0) mp3Data.push(mp3buf);
             }
-            
             const endBuf = mp3encoder.flush();
             if (endBuf.length > 0) mp3Data.push(endBuf);
 
             const blob = new Blob(mp3Data, { type: 'audio/mp3' });
             const url = window.URL.createObjectURL(blob);
             
+            const container = document.getElementById('dlLinkContainer');
+            container.innerHTML = '';
             const link = document.createElement('a');
-            link.className = 'download-link';
+            link.className = 'btn-download';
             link.href = url;
-            link.download = `rendered_${Date.now()}.mp3`;
-            link.innerText = "Download MP3";
+            link.download = `webdaw_render_${Date.now()}.mp3`;
+            link.innerText = "Download MP3 File";
+            container.appendChild(link);
             
-            downloadArea.appendChild(link);
-            statusDiv.textContent = "Render Complete!";
+            document.getElementById('dlModal').style.display = 'flex';
+            showStatus("Export Ready.");
+
         } catch(e) {
-            statusDiv.innerHTML = `<span class="error-text">Encoding Error: ${e.message}</span>`;
+            showStatus("Encoding Error");
         } finally {
-            convertBtn.disabled = false;
+            exportBtn.disabled = false;
             playBtn.disabled = false;
         }
     }
