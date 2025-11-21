@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebDAW Studio</title>
+    <title>WebDAW: Studio Pro</title>
     <style>
         :root {
-            --bg-dark: #121212;
-            --panel-bg: #1e1e1e;
-            --header-bg: #252526;
-            --border-color: #333;
-            --accent: #007fd4;
-            --text-main: #d4d4d4;
-            --text-muted: #858585;
-            --danger: #d94444;
-            --success: #3c9d62;
+            --bg-dark: #1e1e1e;
+            --panel-bg: #252526;
+            --header-bg: #333333;
+            --border-color: #444;
+            --accent: #00cc99;
+            --text-main: #cccccc;
             --track-bg: #2d2d30;
+            --timeline-bg: #181818;
+            --danger: #e74c3c;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             background-color: var(--bg-dark);
@@ -27,753 +28,614 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+            user-select: none;
         }
 
-        /* --- TOP TRANSPORT BAR --- */
+        /* --- TOP BAR --- */
         .transport-bar {
             height: 60px;
             background-color: var(--header-bg);
             border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            gap: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            z-index: 20;
+            display: flex; align-items: center; padding: 0 20px; gap: 15px;
+            z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-
-        .brand { font-weight: bold; font-size: 1.1rem; color: #fff; margin-right: 20px; letter-spacing: 1px;}
+        .brand { font-weight: bold; font-size: 1.2rem; color: #fff; margin-right: 15px; letter-spacing: 1px; }
         
-        .transport-controls {
-            display: flex;
-            gap: 10px;
-            background: #111;
-            padding: 5px;
-            border-radius: 6px;
-            border: 1px solid #444;
-        }
-
+        .transport-controls { display: flex; gap: 5px; background: #1a1a1a; padding: 4px; border-radius: 4px; border:1px solid #444; }
         .btn-transport {
-            background: #333;
-            border: none;
-            color: #ccc;
-            width: 40px;
-            height: 35px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+            background: #333; border: none; color: #eee; width: 40px; height: 35px; border-radius: 3px; cursor: pointer; transition: background 0.2s; font-size: 1.1rem;
         }
-        
-        .btn-transport:hover:not(:disabled) { background: #444; color: white; }
-        .btn-transport.play.active { background: var(--success); color: white; }
-        .btn-transport.stop:hover { background: var(--danger); }
-        
+        .btn-transport:hover:not(:disabled) { background: #555; }
+        .btn-transport.active { background: var(--accent); color: #000; font-weight:bold; }
+        .btn-transport.loop.active { background: #f1c40f; color: #000; }
+        .btn-transport:disabled { opacity: 0.3; cursor: not-allowed; }
+
         .lcd-display {
-            background: #000;
-            color: var(--accent);
-            padding: 5px 15px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            border: 1px solid #444;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            height: 35px;
-            min-width: 80px;
+            background: #000; color: var(--accent); padding: 0 15px; border-radius: 3px; border: 1px solid #555;
+            display: flex; flex-direction: column; justify-content: center; height: 35px; min-width: 90px;
         }
-        .lcd-label { font-size: 0.6rem; color: #555; text-transform: uppercase; }
-        .lcd-val { font-size: 1.1rem; font-weight: bold; }
+        .lcd-val { font-size: 1.1rem; font-weight: bold; text-align: center; font-family: 'Courier New', Courier, monospace; }
+        .lcd-label { font-size: 0.6rem; color: #555; text-align: center; text-transform: uppercase; }
 
-        .btn-export {
+        /* Download Button (Top Right) */
+        .btn-download {
             margin-left: auto;
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 0 20px;
-            height: 40px;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            background: #007acc; color: white; border: none; padding: 0 20px; height: 35px;
+            border-radius: 4px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px;
         }
-        .btn-export:hover { background: #006bb3; }
-        .btn-export:disabled { background: #444; cursor: not-allowed; color: #777; }
+        .btn-download:hover { background: #006bb3; }
+        .btn-download.recording { background: var(--danger); animation: pulse-red 1.5s infinite; }
+        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* --- MAIN WORKSPACE --- */
-        .workspace {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: 250px;
-            background: var(--panel-bg);
-            border-right: 1px solid var(--border-color);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow-y: auto;
-            z-index: 15;
-        }
-
-        .panel-box {
-            background: #252526;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
+        /* --- WORKSPACE --- */
+        .workspace { display: flex; flex: 1; overflow: hidden; }
         
-        .panel-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-            font-weight: bold;
+        .sidebar {
+            width: 280px; background: var(--panel-bg); border-right: 1px solid var(--border-color);
+            padding: 15px; display: flex; flex-direction: column; gap: 15px; z-index: 15; overflow-y: auto;
         }
-
+        .panel-box { background: #1e1e1e; padding: 15px; border-radius: 6px; border: 1px solid #3e3e3e; }
+        .panel-label { font-size:0.7rem; font-weight:bold; color:#888; margin-bottom:8px; display: block; text-transform: uppercase; }
+        
         .btn-file {
-            border: 1px dashed #666;
-            color: #ccc;
-            background: transparent;
-            padding: 20px;
-            width: 100%;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
-            box-sizing: border-box;
-            font-size: 0.9rem;
+            border: 2px dashed #555; color: #aaa; background: transparent; padding: 20px; width: 100%; cursor: pointer; border-radius: 6px; transition: all 0.2s;
         }
         .btn-file:hover { border-color: var(--accent); color: var(--accent); }
         input[type="file"] { display: none; }
 
-        .control-row { margin-bottom: 15px; }
-        .control-label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: #aaa; }
+        .control-group { margin-bottom: 10px; }
+        .control-flex { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #aaa; margin-bottom: 4px;}
+        input[type=range] { width: 100%; cursor: pointer; }
+
+        /* --- TIMELINE & TRACKS --- */
+        .timeline-scroll-container {
+            flex: 1; overflow-y: auto; overflow-x: hidden;
+            position: relative; background: var(--timeline-bg);
+        }
         
-        input[type=range] {
-            -webkit-appearance: none; width: 100%; background: transparent;
+        .track-container { position: relative; padding-top: 30px; }
+
+        .timeline-ruler {
+            position: absolute; top: 0; left: 280px; right: 0; height: 30px;
+            background: #1a1a1a; border-bottom: 1px solid #444; z-index: 10;
+            display: flex; align-items: flex-end; cursor: pointer;
         }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
-            background: var(--accent); cursor: pointer; margin-top: -5px; 
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px; background: #444; border-radius: 2px;
+        .ruler-tick { flex: 1; border-left: 1px solid #333; height: 10px; font-size: 0.6rem; color: #666; padding-left: 4px; pointer-events: none; }
+        .controls-header {
+            position: absolute; top: 0; left: 0; width: 280px; height: 30px;
+            background: var(--panel-bg); border-bottom: 1px solid #444; border-right: 1px solid #444;
+            display: flex; align-items: center; padding-left: 10px; font-size: 0.75rem; font-weight: bold; color: #888; z-index: 11;
         }
 
-        /* --- TRACK AREA --- */
-        .track-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #181818;
-            overflow: hidden;
-            position: relative; /* Anchor for timeline */
-        }
-
-        .track-header-row {
-            height: 30px;
-            background: var(--header-bg);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            z-index: 5;
-        }
-
-        .track-list-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 10px;
-            background: #121212;
-            position: relative;
-        }
-        .track-list-container::-webkit-scrollbar { width: 8px; }
-        .track-list-container::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-
-        /* Single Track Row */
-        .daw-track {
-            display: flex;
-            height: 80px; 
-            background: var(--track-bg);
-            margin-bottom: 4px;
-            border-radius: 4px;
-            border-left: 4px solid var(--accent);
-            overflow: hidden;
-        }
+        /* Track Row */
+        .track-row { display: flex; height: 110px; border-bottom: 1px solid #333; position: relative; }
 
         .track-controls {
-            width: 280px;
-            padding: 8px 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            border-right: 1px solid #111;
-            background: #252526;
-            gap: 6px;
-            z-index: 2;
+            width: 280px; min-width: 280px; background: var(--track-bg); padding: 10px;
+            border-right: 1px solid #444; border-left: 4px solid #555;
+            display: flex; flex-direction: column; justify-content: space-between;
+            position: sticky; left: 0; z-index: 5;
         }
-
-        .track-name { font-weight: bold; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        .track-params {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .track-lane {
+            flex: 1; position: relative; background-image: linear-gradient(#222 1px, transparent 1px); background-size: 100% 12px;
+            cursor: crosshair;
         }
-
-        .mute-btn {
-            background: #333; color: #888; border: 1px solid #444;
-            width: 24px; height: 24px; font-size: 0.7rem; cursor: pointer; border-radius: 3px;
-        }
-        .mute-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-
-        .track-select {
-            background: #111; color: #ddd; border: 1px solid #444;
-            border-radius: 3px; font-size: 0.75rem; height: 24px; flex: 1;
-        }
-
-        .vol-slider-container { flex: 1; display: flex; align-items: center; gap: 5px; }
-        .vol-slider { width: 60px; }
-
-        /* --- VISUALIZATION --- */
-        .track-timeline {
-            flex: 1;
-            position: relative;
-            background-color: #1e1e1e;
-            overflow: hidden;
-            background-image: linear-gradient(#2a2a2a 1px, transparent 1px);
-            background-size: 100% 25%;
-        }
-
         .note-rect {
-            position: absolute;
-            background: var(--accent);
-            opacity: 0.8;
-            height: 6px;
-            border-radius: 2px;
-            box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
-        
-        .drum-track .note-rect { background: #e67e22; }
-        .drum-track { border-left-color: #e67e22; }
-
-        /* --- PLAYHEAD CURSOR --- */
-        /* This sits on top of the track list container */
-        .timeline-overlay {
-            position: absolute;
-            top: 30px; /* Below header */
-            bottom: 0;
-            left: 280px; /* Offset by Control Width + Padding logic */
-            /* Actually, track-list-container adds 10px padding. 
-               Track controls are 280px + padding + border. 
-               Let's align it dynamically via CSS calc or layout */
-            right: 0;
-            pointer-events: none;
-            z-index: 10;
-            overflow: hidden; 
+            position: absolute; background: var(--accent); opacity: 0.7; height: 8px; border-radius: 2px; pointer-events: none;
         }
 
-        /* We need the playhead to be positioned RELATIVE to the timeline area inside the rows.
-           Since all rows align perfectly, we can create one global playhead.
-           Note: Track controls (280) + padding(12*2) + border(1) ~ 305px roughly. 
-           However, let's just make the overlay start after the sidebar.
-        */
+        .track-name { font-weight: bold; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: white; }
+        .track-tools { display: flex; gap: 5px; margin-top: 5px; }
+        .mini-btn {
+            background: #111; border: 1px solid #444; color: #888; border-radius: 3px; 
+            font-size: 0.7rem; cursor: pointer; width: 25px; height: 25px;
+        }
+        .mini-btn.mute.active { background: #c0392b; color: white; border-color: #c0392b; }
         
-        /* Adjusting layout for playhead alignment */
-        .daw-track { position: relative; } /* Ensure z-index works */
-        
-        /* The cursor line itself */
+        select { background: #111; color: #ddd; border: 1px solid #444; padding: 4px; width: 100%; border-radius:3px; font-size: 0.8rem; }
+        .loading-spinner { font-size: 0.7rem; color: #f1c40f; display: none; margin-left: 5px; }
+        .loading-spinner.show { display: inline; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+
+        /* Mixer Controls */
+        .mix-row { display: flex; align-items: center; gap: 8px; font-size: 0.7rem; color:#888; margin-top: 2px;}
+        .mix-row label { width: 25px; }
+        .mix-row input { flex:1; }
+
+        /* Playhead */
+        .timeline-overlay-container {
+            position: absolute; top: 30px; left: 280px; bottom: 0; right: 0;
+            pointer-events: none; z-index: 20;
+        }
         #playhead {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #fff;
-            box-shadow: 0 0 5px rgba(255,255,255, 0.7);
-            left: 0%;
-            display: none; /* Hidden by default */
+            position: absolute; top: 0; bottom: 0; width: 1px; background: #fff;
+            left: 0; box-shadow: 0 0 5px rgba(255,255,255,0.8); display: none;
         }
-        
-        /* Overlays */
+        #playhead-cap {
+            position: absolute; top: -10px; left: -5px; width: 0; height: 0;
+            border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 10px solid #fff;
+        }
+
         #status-overlay {
-            position: fixed; bottom: 20px; right: 20px; background: #333; padding: 10px 20px;
-            border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); font-size: 0.85rem;
-            opacity: 0; transition: opacity 0.3s; pointer-events: none; border-left: 4px solid var(--accent);
-            z-index: 100;
+            position: fixed; bottom: 20px; right: 20px; background: #333; padding: 12px 24px;
+            border-radius: 4px; color: white; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s;
+            border-left: 4px solid var(--accent); box-shadow: 0 5px 20px rgba(0,0,0,0.5); z-index: 100;
         }
         #status-overlay.show { opacity: 1; }
 
-        .download-modal {
-            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center;
-        }
-        .download-box {
-            background: var(--panel-bg); padding: 30px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);
-        }
-        .btn-download {
-            background: var(--success); color: white; border:none; padding: 10px 20px; 
-            border-radius: 4px; text-decoration: none; font-weight: bold; display: inline-block; margin-top:15px;
-        }
-        .close-modal { margin-top: 10px; background: transparent; border: none; color: #777; cursor: pointer; text-decoration: underline;}
-
     </style>
     
+    <!-- External Libraries -->
     <script src="https://unpkg.com/tone@13.8.25/build/Tone.js"></script>
     <script src="https://unpkg.com/@tonejs/midi"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+    <script src="Tonejs-Instruments.js"></script> <!-- Ensure this exists locally for sampled instruments -->
 </head>
 <body>
 
 <header class="transport-bar">
-    <div class="brand">WebDAW</div>
+    <div class="brand">WebDAW <span style="font-weight:300; color:#777;">Studio Pro</span></div>
     
     <div class="transport-controls">
-        <button id="stopBtn" class="btn-transport stop" disabled>■</button>
-        <button id="playBtn" class="btn-transport play" disabled>▶</button>
+        <button id="stopBtn" class="btn-transport" title="Stop">■</button>
+        <button id="playBtn" class="btn-transport" title="Play">▶</button>
+        <button id="loopBtn" class="btn-transport loop" title="Toggle Loop">↻</button>
+    </div>
+    
+    <div class="lcd-display">
+        <div class="lcd-label">TIME</div>
+        <div class="lcd-val" id="timeDisplay">0:00</div>
     </div>
 
     <div class="lcd-display">
-        <div class="lcd-label">TEMPO</div>
-        <div class="lcd-val"><span id="bpmDisplay">120</span> <small>BPM</small></div>
+        <div class="lcd-label">BPM</div>
+        <div class="lcd-val" id="bpmDisplay">120</div>
     </div>
 
-    <button id="exportBtn" class="btn-export" disabled>
-        <span>●</span> Render MP3
+    <!-- Export Button -->
+    <button id="dlBtn" class="btn-download" disabled>
+        <span>↓</span> Export Audio
     </button>
 </header>
 
 <div class="workspace">
+    <!-- SIDEBAR -->
     <div class="sidebar">
         <div class="panel-box">
-            <div class="panel-title">Project File</div>
-            <button class="btn-file" id="fileBtn">Click to Load MIDI</button>
+            <div class="panel-label">PROJECT FILE</div>
+            <button class="btn-file" id="fileBtn">Load MIDI</button>
             <input type="file" id="midiInput" accept=".mid,.midi">
-            <div id="fileName" style="margin-top:10px; font-size:0.8rem; color:#888; text-align:center; word-break: break-all;">No file loaded</div>
+            <div id="fileName" style="margin-top:10px; font-size:0.75rem; color:#666; text-align:center; overflow:hidden; text-overflow:ellipsis;">No file</div>
         </div>
 
         <div class="panel-box">
-            <div class="panel-title">Master Channel</div>
-            <div class="control-row">
-                <div class="control-label"><span>BPM</span></div>
-                <input type="range" id="bpmInput" min="40" max="240" step="1" value="120">
+            <div class="panel-label">MASTER FX</div>
+            
+            <div class="control-group">
+                <div class="control-flex"><span>Speed</span> <span id="speedVal">1.0x</span></div>
+                <input type="range" id="speedInput" min="0.5" max="1.5" step="0.05" value="1.0">
             </div>
-            <div class="control-row">
-                <div class="control-label"><span>Pitch Shift</span> <span id="pitchVal" class="val-display">0</span></div>
-                <input type="range" id="pitchInput" min="-12" max="12" step="1" value="0">
-            </div>
-            <div class="control-row">
-                <div class="control-label"><span>Reverb</span> <span id="reverbVal" class="val-display">10%</span></div>
-                <input type="range" id="reverbInput" min="0" max="0.8" step="0.05" value="0.1">
+
+            <div class="control-group">
+                <div class="control-flex"><span>Reverb</span> <span id="reverbVal">20%</span></div>
+                <input type="range" id="reverbInput" min="0" max="0.6" step="0.05" value="0.2">
             </div>
         </div>
     </div>
 
-    <div class="track-area">
-        <div class="track-header-row">
-            <div style="width: 280px;">TRACK CONTROLS</div>
-            <div style="flex:1; padding-left: 10px;">TIMELINE</div>
-        </div>
+    <!-- TIMELINE -->
+    <div class="timeline-scroll-container" id="timelineScroll">
         
-        <div class="track-list-container" id="trackList">
-            <div style="padding: 20px; text-align: center; color: #444; margin-top: 50px; font-style: italic;">
-                Load a MIDI file to generate track view.
-            </div>
-        </div>
+        <!-- Fixed Headers -->
+        <div class="controls-header">TRACK CONTROLS</div>
+        <div class="timeline-ruler" id="timeRuler"></div>
 
-        <!-- PLAYHEAD OVERLAY -->
-        <!-- Left position accounts for sidebar width + track control width + padding roughly -->
-        <!-- In CSS, daw-track has controls (280) + border(1). -->
-        <!-- But the Timeline div inside daw-track is where notes are. -->
-        <!-- We will align this overlay to match the 'track-timeline' area using calc -->
-        <div class="timeline-overlay" style="left: calc(280px + 20px);"> <!-- 280 controls + padding -->
-            <div id="playhead"></div>
+        <div class="track-container" id="trackContainer"></div>
+        
+        <!-- Playhead -->
+        <div class="timeline-overlay-container">
+            <div id="playhead"><div id="playhead-cap"></div></div>
         </div>
     </div>
 </div>
 
-<div id="status-overlay">Loading...</div>
-
-<div class="download-modal" id="dlModal">
-    <div class="download-box">
-        <h2 style="margin-top:0">Export Complete</h2>
-        <p>Your MP3 is ready.</p>
-        <div id="dlLinkContainer"></div>
-        <button class="close-modal" onclick="document.getElementById('dlModal').style.display='none'">Close</button>
-    </div>
-</div>
+<div id="status-overlay">Ready.</div>
 
 <script>
-    // -- UI Elements --
-    const midiInput = document.getElementById('midiInput');
-    const fileBtn = document.getElementById('fileBtn');
-    const playBtn = document.getElementById('playBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const trackListDiv = document.getElementById('trackList');
-    const statusDiv = document.getElementById('status-overlay');
-    const playhead = document.getElementById('playhead');
+    // --- CONFIG & CONSTANTS ---
+    // Ensure Tonejs-Instruments knows where samples are
+    if (typeof SampleLibrary !== 'undefined') {
+        SampleLibrary.baseUrl = "./samples/"; 
+    }
     
-    // Params
-    const bpmInput = document.getElementById('bpmInput');
-    const bpmDisplay = document.getElementById('bpmDisplay');
-    const pitchInput = document.getElementById('pitchInput');
-    const pitchVal = document.getElementById('pitchVal');
-    const reverbInput = document.getElementById('reverbInput');
-    const reverbVal = document.getElementById('reverbVal');
+    // Fallback list if library isn't loaded
+    const INSTRUMENT_LIST = (typeof SampleLibrary !== 'undefined') 
+        ? SampleLibrary.list 
+        : ['piano', 'bass-electric', 'guitar-acoustic']; 
 
-    // -- State --
+    // --- STATE ---
     let midiData = null;
-    let originalBpm = 120;
     let isPlaying = false;
-    let activeSynths = [];
-    let animationFrameId;
+    let isLooping = false;
+    let animationId;
+    let activeTracks = []; 
+    let originalBpm = 120;
 
-    const INSTRUMENTS = [
-        { val: 'triangle', label: 'Triangle' },
-        { val: 'square', label: 'Square' },
-        { val: 'sawtooth', label: 'Sawtooth' },
-        { val: 'sine', label: 'Sine' },
-        { val: 'membrane', label: 'Drums (Membrane)' }
-    ];
+    // --- AUDIO NODES ---
+    // Master Reverb connected to Master Output
+    const masterReverb = new Tone.Freeverb({roomSize: 0.2, dampening: 3000}).toMaster();
+    
+    // --- DOM ELEMENTS ---
+    const els = {
+        midiInput: document.getElementById('midiInput'),
+        fileBtn: document.getElementById('fileBtn'),
+        trackContainer: document.getElementById('trackContainer'),
+        playBtn: document.getElementById('playBtn'),
+        stopBtn: document.getElementById('stopBtn'),
+        loopBtn: document.getElementById('loopBtn'),
+        dlBtn: document.getElementById('dlBtn'),
+        playhead: document.getElementById('playhead'),
+        timeDisplay: document.getElementById('timeDisplay'),
+        bpmDisplay: document.getElementById('bpmDisplay'),
+        speedInput: document.getElementById('speedInput'),
+        reverbInput: document.getElementById('reverbInput'),
+        speedVal: document.getElementById('speedVal'),
+        reverbVal: document.getElementById('reverbVal'),
+        timeRuler: document.getElementById('timeRuler'),
+        timelineScroll: document.getElementById('timelineScroll')
+    };
 
-    function showStatus(msg) {
-        statusDiv.textContent = msg;
-        statusDiv.classList.add('show');
-        if(msg === 'Stopped.' || msg.includes('Loaded')) {
-            setTimeout(() => statusDiv.classList.remove('show'), 2000);
-        }
+    // --- LISTENERS ---
+    els.fileBtn.addEventListener('click', () => els.midiInput.click());
+
+    els.reverbInput.oninput = (e) => {
+        masterReverb.roomSize.value = e.target.value;
+        els.reverbVal.innerText = Math.round(e.target.value * 100) + "%";
+    };
+
+    els.speedInput.oninput = (e) => {
+        const val = parseFloat(e.target.value);
+        els.speedVal.innerText = val + "x";
+        if(midiData) Tone.Transport.bpm.value = originalBpm * val;
+        els.bpmDisplay.innerText = Math.round(Tone.Transport.bpm.value);
+    };
+
+    els.loopBtn.addEventListener('click', () => {
+        isLooping = !isLooping;
+        els.loopBtn.classList.toggle('active', isLooping);
+        Tone.Transport.loop = isLooping;
+    });
+
+    // Scrubbing Logic
+    els.timeRuler.addEventListener('mousedown', scrubTimeline);
+    els.trackContainer.addEventListener('mousedown', (e) => {
+        if(e.target.closest('.track-lane')) scrubTimeline(e);
+    });
+
+    function scrubTimeline(e) {
+        if(!midiData) return;
+        const rect = els.timeRuler.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left; 
+        const width = rect.width;
+        const percent = Math.max(0, Math.min(1, offsetX / width));
+        
+        const jumpTime = midiData.duration * percent;
+        Tone.Transport.seconds = jumpTime;
+        els.playhead.style.left = (percent * 100) + '%';
+        if(!isPlaying) updateTimeDisplay();
     }
 
-    // -- UI Listeners --
-    fileBtn.addEventListener('click', () => midiInput.click());
-    
-    pitchInput.oninput = (e) => pitchVal.innerText = (e.target.value > 0 ? '+' : '') + e.target.value;
-    reverbInput.oninput = (e) => reverbVal.innerText = Math.round(e.target.value * 100) + '%';
-    bpmInput.oninput = (e) => bpmDisplay.innerText = e.target.value;
-
-    // -- 1. Load Logic --
-    midiInput.addEventListener('change', (e) => {
+    // --- 1. FILE LOADING ---
+    els.midiInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         
         if (isPlaying) stopPlayback();
+        cleanupTracks();
         showStatus("Parsing MIDI...");
-        
+
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
                 midiData = new Midi(e.target.result);
-                setupProject(file.name);
-            } catch (err) {
-                showStatus("Error: " + err.message);
+                document.getElementById('fileName').textContent = file.name;
+                
+                // Setup Transport
+                originalBpm = midiData.header.tempos.length > 0 ? midiData.header.tempos[0].bpm : 120;
+                Tone.Transport.bpm.value = originalBpm;
+                Tone.Transport.loopStart = 0;
+                Tone.Transport.loopEnd = midiData.duration;
+                Tone.Transport.loop = isLooping;
+                
+                els.bpmDisplay.innerText = Math.round(originalBpm);
+
+                renderUI();
+                showStatus("Loaded successfully.");
+                
+                els.playBtn.disabled = false;
+                els.stopBtn.disabled = false;
+                els.dlBtn.disabled = false;
+            } catch(err) {
+                console.error(err);
+                showStatus("Error parsing MIDI file.");
             }
         };
         reader.readAsArrayBuffer(file);
     });
 
-    function setupProject(filename) {
-        document.getElementById('fileName').textContent = filename;
-        
-        if (midiData.header.tempos.length > 0) {
-            originalBpm = Math.round(midiData.header.tempos[0].bpm);
-        } else {
-            originalBpm = 120;
-        }
-
-        bpmInput.value = originalBpm;
-        bpmDisplay.innerText = originalBpm;
-        
-        renderTracksUI();
-
-        playBtn.disabled = false;
-        stopBtn.disabled = false;
-        exportBtn.disabled = false;
-        showStatus("Project Loaded.");
+    function cleanupTracks() {
+        activeTracks.forEach(t => {
+            if(t.synth) t.synth.dispose();
+            if(t.part) t.part.dispose();
+            if(t.panVol) t.panVol.dispose();
+        });
+        activeTracks = [];
+        els.trackContainer.innerHTML = '';
     }
 
-    function renderTracksUI() {
-        trackListDiv.innerHTML = '';
-        const totalDuration = midiData.duration; 
+    // --- 2. RENDER UI ---
+    function renderUI() {
+        const duration = midiData.duration;
+        
+        // Draw Ruler Ticks
+        els.timeRuler.innerHTML = '';
+        for(let i=0; i<=10; i++) {
+            let tick = document.createElement('div');
+            tick.className = 'ruler-tick';
+            tick.style.borderLeft = i === 0 ? 'none' : '1px solid #333';
+            // Format time label (MM:SS)
+            tick.innerText = i === 0 ? '' : new Date((duration/10 * i) * 1000).toISOString().substr(14, 5);
+            els.timeRuler.appendChild(tick);
+        }
 
+        // Build Instrument Dropdown Options
+        let options = `<option value="synth_triangle">Synth: Triangle</option>
+                       <option value="synth_saw">Synth: Sawtooth</option>`;
+        INSTRUMENT_LIST.forEach(inst => {
+            options += `<option value="${inst}">Real: ${inst.charAt(0).toUpperCase() + inst.slice(1)}</option>`;
+        });
+
+        // Render Tracks
         midiData.tracks.forEach((track, index) => {
-            if (track.notes.length === 0) return;
+            if (track.notes.length === 0) return; // Skip empty tracks
 
-            let defaultInst = 'triangle';
-            let isDrum = false;
+            // Intelligent Instrument Selection
+            let defaultInst = 'synth_triangle';
+            INSTRUMENT_LIST.forEach(inst => {
+                if(track.instrument.name.toLowerCase().includes(inst)) defaultInst = inst;
+            });
+            if (track.instrument.percussion || track.channel === 9) defaultInst = 'synth_saw'; 
 
-            if (track.instrument.percussion || track.channel === 9) {
-                defaultInst = 'membrane';
-                isDrum = true;
-            } else if (track.instrument.family === 'bass') {
-                defaultInst = 'sawtooth';
-            } else if (track.instrument.family === 'piano') {
-                defaultInst = 'square';
-            }
+            // Create Channel Strip (PanVol -> MasterReverb)
+            const panVol = new Tone.PanVol(0, -5).connect(masterReverb);
 
+            activeTracks[index] = {
+                synth: null, 
+                panVol: panVol, 
+                part: null,
+                notes: track.notes,
+                name: track.name || `Track ${index + 1}`
+            };
+
+            // Render Note Blocks
             let notesHtml = '';
-            const minPitch = 24; 
-            const maxPitch = 100;
-            const pitchRange = maxPitch - minPitch;
-
             track.notes.forEach(note => {
-                const left = (note.time / totalDuration) * 100;
-                const width = (note.duration / totalDuration) * 100;
-                let pitchPercent = ((note.midi - minPitch) / pitchRange) * 100;
-                if (pitchPercent < 0) pitchPercent = 0;
-                if (pitchPercent > 95) pitchPercent = 95;
-                if (isDrum) pitchPercent = 50 + ((note.midi % 12) * 2);
-
-                notesHtml += `<div class="note-rect" style="left:${left}%; width:${Math.max(width, 0.2)}%; bottom:${pitchPercent}%;"></div>`;
+                const left = (note.time / duration) * 100;
+                const width = (note.duration / duration) * 100;
+                // Normalize pitch (approx range 24-100) for visual height
+                const top = 100 - ((note.midi - 24) / 80) * 100;
+                notesHtml += `<div class="note-rect" style="left:${left}%; width:${width}%; top:${top}%;"></div>`;
             });
 
-            let optionsHtml = INSTRUMENTS.map(inst => 
-                `<option value="${inst.val}" ${inst.val === defaultInst ? 'selected' : ''}>${inst.label}</option>`
-            ).join('');
-
-            const trackClass = isDrum ? 'daw-track drum-track' : 'daw-track';
-
-            const div = document.createElement('div');
-            div.className = trackClass;
-            div.innerHTML = `
+            const row = document.createElement('div');
+            row.className = 'track-row';
+            row.innerHTML = `
                 <div class="track-controls">
-                    <div class="track-name">${index + 1}. ${track.name || track.instrument.name || 'Track ' + (index+1)}</div>
-                    <div class="track-params">
-                        <button class="mute-btn" id="mute-${index}" onclick="toggleMute(this)">M</button>
-                        <select class="track-select" id="inst-${index}">${optionsHtml}</select>
-                        <div class="vol-slider-container">
-                            <span style="font-size:0.6rem; color:#666">VOL</span>
-                            <input type="range" class="vol-slider" id="vol-${index}" min="-60" max="0" value="-5" step="1">
-                        </div>
+                    <div class="track-name">${index+1}. ${activeTracks[index].name}</div>
+                    <div class="track-tools">
+                        <button class="mini-btn mute" onclick="toggleMute(${index}, this)">M</button>
+                        <select id="sel-${index}" onchange="changeInstrument(${index}, this.value)">${options}</select>
+                    </div>
+                    <span class="loading-spinner" id="load-${index}">Loading...</span>
+                    
+                    <div class="mix-row">
+                        <label>Vol</label>
+                        <input type="range" min="-60" max="0" value="-5" oninput="changeVol(${index}, this.value)">
+                    </div>
+                    <div class="mix-row">
+                        <label>Pan</label>
+                        <input type="range" min="-1" max="1" step="0.1" value="0" oninput="changePan(${index}, this.value)">
                     </div>
                 </div>
-                <div class="track-timeline">
+                <div class="track-lane">
                     ${notesHtml}
                 </div>
             `;
-            trackListDiv.appendChild(div);
+            els.trackContainer.appendChild(row);
+            
+            // Initialize Instrument
+            document.getElementById(`sel-${index}`).value = defaultInst;
+            changeInstrument(index, defaultInst); 
         });
     }
 
-    window.toggleMute = function(btn) {
-        btn.classList.toggle('active');
-    };
-
-    // -- 2. Scheduling Engine --
-    function scheduleTracks(transport, destination) {
-        const targetBpm = parseInt(bpmInput.value);
-        const safeOriginalBpm = originalBpm > 0 ? originalBpm : 120;
-        const speedRatio = targetBpm / safeOriginalBpm;
+    // --- 3. INSTRUMENT LOGIC ---
+    window.changeInstrument = async function(index, type) {
+        const spinner = document.getElementById(`load-${index}`);
+        spinner.classList.add('show');
         
-        const pitchShift = parseInt(pitchInput.value);
-        const reverbAmt = parseFloat(reverbInput.value);
+        const trackState = activeTracks[index];
 
-        const reverb = new Tone.Freeverb({ roomSize: reverbAmt, dampening: 3000 }).connect(destination);
-        const synthsCreated = [];
+        try {
+            const newInst = await createInstrument(type);
+            // Connect new instrument to channel strip
+            newInst.connect(trackState.panVol);
 
-        midiData.tracks.forEach((track, index) => {
-            if (track.notes.length === 0) return;
+            if(trackState.synth) trackState.synth.dispose();
+            trackState.synth = newInst;
 
-            const instEl = document.getElementById(`inst-${index}`);
-            const volEl = document.getElementById(`vol-${index}`);
-            const muteEl = document.getElementById(`mute-${index}`);
-            if(!instEl || muteEl.classList.contains('active')) return;
+            // Re-create the Part sequence
+            if(trackState.part) trackState.part.dispose();
+            createPart(index);
 
-            const instType = instEl.value;
-            const volDb = parseInt(volEl.value);
+        } catch(e) {
+            console.error(e);
+            showStatus("Failed to load sample. Using Synth.");
+            // Fallback logic could go here
+        } finally {
+            spinner.classList.remove('show');
+        }
+    }
 
-            let synth;
-            if (instType === 'membrane') {
-                synth = new Tone.PolySynth(4, Tone.MembraneSynth);
-                synth.set({ volume: volDb, octaves: 2, pitchDecay: 0.05 });
+    function createInstrument(type) {
+        return new Promise(resolve => {
+            if(type.startsWith('synth')) {
+                const t = type.split('_')[1];
+                const poly = new Tone.PolySynth(6, Tone.Synth);
+                poly.set({ oscillator: { type: t }, envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 } });
+                resolve(poly);
             } else {
-                synth = new Tone.PolySynth(6, Tone.Synth);
-                synth.set({
-                    oscillator: { type: instType },
-                    envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.5 },
-                    volume: volDb
+                // Uses Tonejs-Instruments library
+                if (typeof SampleLibrary === 'undefined') {
+                    // Fallback if script missing
+                    resolve(new Tone.PolySynth(4, Tone.Synth));
+                    return;
+                }
+                
+                var sampler = SampleLibrary.load({
+                    instruments: type,
+                    onload: () => resolve(sampler)
                 });
             }
-
-            synth.connect(reverb);
-            synthsCreated.push(synth);
-
-            track.notes.forEach(note => {
-                let startTime = note.time / speedRatio;
-                let duration = note.duration / speedRatio;
-                if (duration <= 0) duration = 0.1;
-                if (startTime < 0) startTime = 0;
-
-                transport.schedule((time) => {
-                    if (instType === 'membrane') {
-                         synth.triggerAttackRelease(note.name, duration, time, note.velocity);
-                    } else {
-                        try {
-                            const transposed = Tone.Frequency(note.name).transpose(pitchShift);
-                            synth.triggerAttackRelease(transposed, duration, time, note.velocity);
-                        } catch(e) {}
-                    }
-                }, startTime);
-            });
         });
-
-        return synthsCreated;
     }
 
-    // -- 3. Transport & Animation Logic --
-    playBtn.addEventListener('click', async () => {
-        if (isPlaying) { stopPlayback(); return; }
-        if (Tone.context.state !== 'running') await Tone.context.resume();
-
-        showStatus("Playing...");
-        playBtn.classList.add('active');
+    function createPart(index) {
+        const trackState = activeTracks[index];
         
-        activeSynths = scheduleTracks(Tone.Transport, Tone.Master);
+        // Tone.Part schedules events efficiently
+        const part = new Tone.Part((time, note) => {
+            if(trackState.synth && !trackState.panVol.mute) {
+                trackState.synth.triggerAttackRelease(note.name, note.duration, time, note.velocity);
+            }
+        }, trackState.notes.map(n => ({
+            time: n.time, name: n.name, duration: n.duration, velocity: n.velocity
+        })));
+        
+        part.start(0);
+        trackState.part = part;
+    }
+
+    // --- 4. TRACK CONTROLS ---
+    window.toggleMute = function(index, btn) {
+        const node = activeTracks[index].panVol;
+        node.mute = !node.mute;
+        btn.classList.toggle('active', node.mute);
+    }
+
+    window.changeVol = function(index, val) {
+        activeTracks[index].panVol.volume.value = parseFloat(val);
+    }
+
+    window.changePan = function(index, val) {
+        activeTracks[index].panVol.pan.value = parseFloat(val);
+    }
+
+    // --- 5. TRANSPORT & PLAYBACK ---
+    els.playBtn.addEventListener('click', async () => {
+        if (isPlaying) return;
+        await Tone.start(); // Browser audio context start
         Tone.Transport.start();
         isPlaying = true;
-        
-        // Start Playhead
-        playhead.style.display = 'block';
-        animatePlayhead();
+        els.playBtn.classList.add('active');
+        els.playhead.style.display = 'block';
+        animate();
     });
 
-    stopBtn.addEventListener('click', stopPlayback);
+    els.stopBtn.addEventListener('click', stopPlayback);
 
     function stopPlayback() {
         Tone.Transport.stop();
-        Tone.Transport.cancel(); // Clear events
-        activeSynths.forEach(s => s.dispose());
-        activeSynths = [];
         isPlaying = false;
-        playBtn.classList.remove('active');
-        showStatus("Stopped.");
-        
-        // Stop Playhead
-        cancelAnimationFrame(animationFrameId);
-        playhead.style.left = '0%';
-        playhead.style.display = 'none';
+        els.playBtn.classList.remove('active');
+        els.playhead.style.display = 'none';
+        cancelAnimationFrame(animationId);
+        updateTimeDisplay();
     }
 
-    function animatePlayhead() {
+    function animate() {
         if(!isPlaying) return;
+        const progress = Tone.Transport.seconds / midiData.duration;
+        let visProgress = progress;
+        
+        if(isLooping) visProgress = (Tone.Transport.seconds % midiData.duration) / midiData.duration;
 
-        // Calculate current progress
-        const targetBpm = parseInt(bpmInput.value);
-        const safeOriginalBpm = originalBpm > 0 ? originalBpm : 120;
-        const speedRatio = targetBpm / safeOriginalBpm;
-        
-        // The total scheduled duration in seconds (after speed adjustment)
-        const totalDuration = midiData.duration / speedRatio;
-        
-        // Current Time in seconds
-        const currentTime = Tone.Transport.seconds;
-        
-        const progressPercent = (currentTime / totalDuration) * 100;
-        
-        if(progressPercent <= 100) {
-            playhead.style.left = progressPercent + '%';
-            animationFrameId = requestAnimationFrame(animatePlayhead);
-        } else {
-            // Auto stop when done
+        // Stop if end reached and not looping
+        if(visProgress >= 1 && !isLooping) {
             stopPlayback();
+            return;
         }
+
+        els.playhead.style.left = (visProgress * 100) + '%';
+        updateTimeDisplay();
+        animationId = requestAnimationFrame(animate);
     }
 
-    // -- 4. Export Logic --
-    exportBtn.addEventListener('click', () => {
-        if (!midiData) return;
-        if (isPlaying) stopPlayback();
-        
-        exportBtn.disabled = true;
-        playBtn.disabled = true;
-        
-        const targetBpm = parseInt(bpmInput.value);
-        const safeOriginalBpm = originalBpm > 0 ? originalBpm : 120;
-        const speedRatio = targetBpm / safeOriginalBpm;
-        const adjustedDuration = (midiData.duration / speedRatio) + 1.0; 
+    function updateTimeDisplay() {
+        const s = Tone.Transport.seconds;
+        const m = Math.floor(s / 60);
+        const sec = Math.floor(s % 60);
+        els.timeDisplay.textContent = `${m}:${sec.toString().padStart(2,'0')}`;
+    }
 
-        showStatus("Rendering Audio... (Please Wait)");
+    // --- 6. EXPORT ---
+    els.dlBtn.addEventListener('click', async () => {
+        if(isPlaying) stopPlayback();
+        
+        await Tone.start();
+        
+        // Setup Recorder
+        const recorder = new Tone.Recorder();
+        Tone.Master.connect(recorder);
 
-        Tone.Offline(function(Transport) {
-            scheduleTracks(Transport, Tone.Master);
-            Transport.start();
-        }, adjustedDuration).then(function(buffer) {
-            showStatus("Encoding MP3...");
-            setTimeout(() => encodeMp3(buffer), 50);
-        }).catch(function(err){
-            console.error(err);
-            showStatus("Render Error");
-            exportBtn.disabled = false;
-            playBtn.disabled = false;
-        });
+        showStatus("Recording... Do not close tab.");
+        els.dlBtn.classList.add('recording');
+        els.dlBtn.disabled = true;
+        
+        // Start Real-time recording
+        recorder.start();
+        Tone.Transport.stop();
+        Tone.Transport.seconds = 0;
+        Tone.Transport.start();
+
+        // Wait for duration of song
+        const durationMS = (midiData.duration * 1000) + 500; // add small buffer
+        
+        setTimeout(async () => {
+            Tone.Transport.stop();
+            const recording = await recorder.stop();
+            
+            els.dlBtn.classList.remove('recording');
+            els.dlBtn.disabled = false;
+            showStatus("Download starting...");
+            
+            // Trigger Download (WebM/WAV depending on browser)
+            const url = URL.createObjectURL(recording);
+            const anchor = document.createElement("a");
+            anchor.download = `project_export_${Date.now()}.webm`;
+            anchor.href = url;
+            anchor.click();
+            
+            showStatus("Export complete.");
+        }, durationMS);
     });
 
-    function encodeMp3(buffer) {
-        try {
-            const channels = 2;
-            const sampleRate = buffer.sampleRate;
-            const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, 128);
-            
-            const leftData = buffer.getChannelData(0);
-            const rightData = buffer.getChannelData(1);
-            const leftInt16 = convertFloatToInt16(leftData);
-            const rightInt16 = convertFloatToInt16(rightData);
-            
-            const blockSize = 1152;
-            const mp3Data = [];
-            
-            for (let i = 0; i < leftInt16.length; i += blockSize) {
-                const l = leftInt16.subarray(i, i + blockSize);
-                const r = rightInt16.subarray(i, i + blockSize);
-                const mp3buf = mp3encoder.encodeBuffer(l, r);
-                if (mp3buf.length > 0) mp3Data.push(mp3buf);
-            }
-            const endBuf = mp3encoder.flush();
-            if (endBuf.length > 0) mp3Data.push(endBuf);
-
-            const blob = new Blob(mp3Data, { type: 'audio/mp3' });
-            const url = window.URL.createObjectURL(blob);
-            
-            const container = document.getElementById('dlLinkContainer');
-            container.innerHTML = '';
-            const link = document.createElement('a');
-            link.className = 'btn-download';
-            link.href = url;
-            link.download = `webdaw_render_${Date.now()}.mp3`;
-            link.innerText = "Download MP3 File";
-            container.appendChild(link);
-            
-            document.getElementById('dlModal').style.display = 'flex';
-            showStatus("Export Ready.");
-
-        } catch(e) {
-            showStatus("Encoding Error");
-        } finally {
-            exportBtn.disabled = false;
-            playBtn.disabled = false;
-        }
+    function showStatus(msg) {
+        const el = document.getElementById('status-overlay');
+        el.textContent = msg;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 3000);
     }
 
-    function convertFloatToInt16(float32Array) {
-        const l = float32Array.length;
-        const res = new Int16Array(l);
-        for (let i = 0; i < l; i++) {
-            let s = Math.max(-1, Math.min(1, float32Array[i]));
-            res[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-        }
-        return res;
-    }
 </script>
 
 </body>
